@@ -1,7 +1,7 @@
 insert into`commissiontotals`(`CommissionTotalID`,`InvoiceID`,
     `ManagingCompanyID`,`Percentage`,`DateTimeAdded`)
-select`buuid`(),
-'200fc7d0-1e6c-11e8-a382-12237f224cef',
+select 0x11E823CE831B78238D060e30096EF3AA`BuuID`,
+'200fc7d0-1e6c-11e8-a382-12237f224cef' `ID`,
 `networks`.`ManagingCompanyID`,
 `salesteamnetworks`.`Percentage`,
 now()
