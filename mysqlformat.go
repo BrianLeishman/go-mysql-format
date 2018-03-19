@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"strings"
-	"time"
 )
 
 func isAlpha(b byte) bool {
@@ -65,8 +64,6 @@ func isOperator(b byte) bool {
 
 func main() {
 
-	timestart := time.Now()
-
 	mysql := ""
 	chunkSize := 4 * 1024
 
@@ -94,7 +91,11 @@ func main() {
 
 	newMySQL := ""
 	maxLineLength := 60
+
 	currentLineLength := 0
+
+	lastNewlineOperatorPosition := 0
+	lastNewlineOperatorTabs := 0
 
 	currentQuery := queryUnset
 	insertUpdate := false
@@ -107,8 +108,11 @@ func main() {
 
 	addNewline := func() {
 		newMySQL += "\n"
-		currentLineLength = 0
+
 		maxLineLength = 80
+
+		currentLineLength = 0
+		lastNewlineOperatorPosition = 0
 
 		if p > 0 {
 			newMySQL += strings.Repeat(" ", p*4)
@@ -225,7 +229,7 @@ func main() {
 
 			switch currentToken.tokenType {
 			case tokenOperator:
-				if currentQuery == queryInsert && currentToken.value == "(" && !insertUpdate {
+				if currentQuery == queryInsert && p == 0 && currentToken.value == "(" && !insertUpdate {
 					addNewline()
 				}
 
@@ -235,7 +239,7 @@ func main() {
 					p--
 				}
 
-				newMySQL += currentToken.value
+				newString = currentToken.value
 			case tokenWord, tokenFunction, tokenNumeric, tokenBinary:
 				if hasPreviousToken && (previousToken.tokenType == tokenWord || previousToken.tokenType == tokenFunction ||
 					previousToken.tokenType == tokenNumeric || previousToken.tokenType == tokenBinary) {
@@ -249,7 +253,8 @@ func main() {
 							(previousToken.value != "inner" && previousToken.value != "cross" &&
 								previousToken.value != "left" && previousToken.value != "right" &&
 								previousToken.value != "outer" && previousToken.value != "natural"))) ||
-						((currentToken.value == "left" || currentToken.value == "right") && (previousToken.tokenType != tokenWord || previousToken.value != "natural")) ||
+						((currentToken.value == "left" || currentToken.value == "right") &&
+							(previousToken.tokenType != tokenWord || previousToken.value != "natural")) ||
 						(currentToken.value == "outer" && (previousToken.tokenType != tokenWord ||
 							(previousToken.value != "left" && previousToken.value != "right"))) ||
 						(currentQuery == queryInsert && (currentToken.value == "on" || currentToken.value == "select")) {
@@ -278,11 +283,22 @@ func main() {
 			}
 
 			newStringLen := len(newString)
+
 			if newStringLen > 0 {
-				if currentLineLength > 0 && hasPreviousToken && previousToken.tokenType == tokenOperator && previousToken.value == "," && newStringLen+currentLineLength > maxLineLength {
-					//if _, ok := newlineOperators[previousToken.value[0]]; ok {
-					addNewline()
-					//}
+
+				if lastNewlineOperatorPosition > 0 && currentLineLength+newStringLen > maxLineLength {
+					if lastNewlineOperatorTabs > 0 {
+						newMySQL = newMySQL[:lastNewlineOperatorPosition] + "\n" + strings.Repeat(" ", lastNewlineOperatorTabs*4) + newMySQL[lastNewlineOperatorPosition:]
+					} else {
+						newMySQL = newMySQL[:lastNewlineOperatorPosition] + "\n" + newMySQL[lastNewlineOperatorPosition:]
+					}
+					currentLineLength = len(newMySQL) - lastNewlineOperatorPosition
+					lastNewlineOperatorPosition = 0
+				}
+
+				if currentToken.tokenType == tokenOperator && currentToken.value == "," {
+					lastNewlineOperatorPosition = len(newMySQL) + 1
+					lastNewlineOperatorTabs = p
 				}
 
 				currentLineLength += newStringLen
@@ -299,7 +315,5 @@ func main() {
 	}
 
 	fmt.Println(newMySQL)
-
-	fmt.Println(time.Now().Sub(timestart))
 
 }
