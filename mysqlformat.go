@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"html"
 	"io"
 	"os"
 	"strings"
@@ -105,6 +106,7 @@ func main() {
 
 	currentQuery := queryUnset
 	insertUpdate := false
+	insertValueNumber := 0
 
 	tokens := make([]token, 0)
 	newToken := false
@@ -114,7 +116,7 @@ func main() {
 
 	addNewline := func() {
 		newMySQL += "\n"
-		htmlMySQL += "<br />\n"
+		htmlMySQL += "<br>"
 
 		maxLineLength = 80
 
@@ -242,6 +244,13 @@ func main() {
 			case tokenOperator:
 				if currentQuery == queryInsert && p == 0 && currentToken.value == "(" && !insertUpdate {
 					addNewline()
+
+					insertValueNumber++
+					if insertValueNumber&1 == 0 {
+						htmlMySQL += `<div style="display:inline-block;background-color:rgba(127,127,127,0.2)">`
+					}
+				} else if currentQuery == queryInsert && p == 1 && currentToken.value == ")" && !insertUpdate {
+					htmlMySQL += `</div>`
 				}
 
 				if currentToken.value == "(" {
@@ -250,13 +259,14 @@ func main() {
 					p--
 				}
 
-				newString = currentToken.value
+				newString += currentToken.value
+				newHTML += `<b>` + html.EscapeString(currentToken.value) + `</b>`
 			case tokenWord, tokenFunction, tokenNumeric, tokenBinary:
 				if hasPreviousToken && (previousToken.tokenType == tokenWord || previousToken.tokenType == tokenFunction ||
 					previousToken.tokenType == tokenNumeric || previousToken.tokenType == tokenBinary) {
 					currentLineLength++
-					newMySQL += " "
-					htmlMySQL += " "
+					newString += " "
+					newHTML += " "
 				}
 
 				if hasPreviousToken && currentToken.tokenType == tokenWord {
@@ -278,32 +288,37 @@ func main() {
 					}
 				}
 
-				newString = currentToken.value
+				newString += currentToken.value
 				switch currentToken.tokenType {
 				case tokenWord:
-					newHTML += `<span style="color:#1976D2;font-weight:bold">` + currentToken.value + `</span>`
+					newHTML += `<b style="color:#1976D2">` + html.EscapeString(currentToken.value) + `</b>`
 				case tokenFunction:
-					newHTML += `<span style="color:#BA68C8">` + currentToken.value + `</span>`
+					newHTML += `<span style="color:#BA68C8">` + html.EscapeString(currentToken.value) + `</span>`
 				case tokenNumeric:
-					newHTML += `<span style="color:#FF9800">` + currentToken.value + `</span>`
+					newHTML += `<span style="color:#FF9800">` + html.EscapeString(currentToken.value) + `</span>`
 				case tokenBinary:
-					newHTML += `<span style="color:#673AB7;background-color:#F0F0F0">` + currentToken.value + `</span>`
+					newHTML += `<span style="color:#673AB7;background-color:rgba(255,193,7,0.1)">` + html.EscapeString(currentToken.value) + `</span>`
 				}
 			case tokenName:
 				if hasPreviousToken && previousToken.tokenType == tokenName {
 					currentLineLength++
-					newMySQL += " "
-					htmlMySQL += ""
+					newString += " "
+					newHTML += " "
 				}
 
-				newString = "`" + currentToken.value + "`"
+				newString += "`" + currentToken.value + "`"
+				newHTML += `<span style="color:#8D6E63">` + html.EscapeString("`"+currentToken.value+"`") + `</span>`
 			case tokenString:
 				if hasPreviousToken && previousToken.tokenType == tokenString {
 					currentLineLength++
-					newMySQL += " "
-					htmlMySQL += ""
+					newString += " "
+					newHTML += " "
 				}
-				newString = "'" + strings.Replace(currentToken.value, `'`, `\'`, -1) + "'"
+
+				slashesRemoved := strings.Replace(currentToken.value, `'`, `\'`, -1)
+
+				newString += "'" + slashesRemoved + "'"
+				newHTML += `<span style="color:#4CAF50">` + html.EscapeString("'"+slashesRemoved+"'") + `</span>`
 			}
 
 			newStringLen := len(newString)
@@ -313,10 +328,10 @@ func main() {
 				if lastNewlineOperatorPosition > 0 && currentLineLength+newStringLen > maxLineLength {
 					if lastNewlineOperatorTabs > 0 {
 						newMySQL = newMySQL[:lastNewlineOperatorPosition] + "\n" + strings.Repeat(" ", lastNewlineOperatorTabs*4) + newMySQL[lastNewlineOperatorPosition:]
-						htmlMySQL = htmlMySQL[:htmlLastNewlineOperatorPosition] + "<br />\n" + strings.Repeat(" ", lastNewlineOperatorTabs*4) + htmlMySQL[htmlLastNewlineOperatorPosition:]
+						htmlMySQL = htmlMySQL[:htmlLastNewlineOperatorPosition] + "<br>" + strings.Repeat(" ", lastNewlineOperatorTabs*4) + htmlMySQL[htmlLastNewlineOperatorPosition:]
 					} else {
 						newMySQL = newMySQL[:lastNewlineOperatorPosition] + "\n" + newMySQL[lastNewlineOperatorPosition:]
-						htmlMySQL = htmlMySQL[:htmlLastNewlineOperatorPosition] + "<br />\n" + htmlMySQL[htmlLastNewlineOperatorPosition:]
+						htmlMySQL = htmlMySQL[:htmlLastNewlineOperatorPosition] + "<br>" + htmlMySQL[htmlLastNewlineOperatorPosition:]
 					}
 					currentLineLength = len(newMySQL) - lastNewlineOperatorPosition
 					lastNewlineOperatorPosition = 0
@@ -325,7 +340,7 @@ func main() {
 
 				if currentToken.tokenType == tokenOperator && currentToken.value == "," {
 					lastNewlineOperatorPosition = len(newMySQL) + 1
-					htmlLastNewlineOperatorPosition = len(htmlMySQL) + 1
+					htmlLastNewlineOperatorPosition = len(htmlMySQL) + 8
 
 					lastNewlineOperatorTabs = p
 				}

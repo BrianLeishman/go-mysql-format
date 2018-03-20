@@ -1,20 +1,25 @@
-insert ignore into`quoterequests`(`QuoteRequestID`,`CompanyID`,`UserID`,
-    `Company`,`FirstName`,`LastName`,`AddressLine1`,`AddressLine2`,`City`,`CountryID`,
-    `StateID`,`Zip`,`Phone`,`Email`,`__Added`)
+insert ignore into`quotes`(`QuoteID`,`QuoteRequestID`,`Number`,`UserID`,`Open`,
+    `Send`,`_Total`,`__Added`,`Hidden`)
 values
-(0x11E823D9D3B9195484331206BB36A2DB,'3e55d1bb-d8b6-11e4-b38f-b8ca3a83b4c8',
-    'd3b2cd24-23d9-11e8-b3e7-1206bb36a2db',null,'Jeremiah','Smith',null,null,null,
-    'a26f5174-047e-11e5-8309-3417ebdfde80','4a7f2709-0480-11e5-8309-3417ebdfde80',
-    null,'+1 719-433-8314','propaintball826@gmail.com','2018-03-09 15:38:00')
+(0x11E8295289F6B23AAA360E7B3EF972A6,0x11E8295289F55C2893180E7B3EF972A6,'1',
+    '89ee0806-2952-11e8-8d3c-0e7b3ef972a6','1','0','476',null,'0'),
+(0x11E82BCB177C55E0AB9E4D401A7C8091,0x11E8295289F55C2893180E7B3EF972A6,'2',
+    '89ee0806-2952-11e8-8d3c-0e7b3ef972a6','1','0','945',null,'0'),
+(0x11E82BCB1D9CF060AB9E4D401A7C8091,0x11E8295289F55C2893180E7B3EF972A6,'3',
+    '89ee0806-2952-11e8-8d3c-0e7b3ef972a6','1','0','536',null,'0'),
+(0x11E82BCB25DC4C30AB9E4D401A7C8091,0x11E8295289F55C2893180E7B3EF972A6,'4',
+    '89ee0806-2952-11e8-8d3c-0e7b3ef972a6','0','0','1125',null,'0'),
+(0x11E82C404F5A30C0BCFC932E0B6AED9D,0x11E8295289F55C2893180E7B3EF972A6,'5',
+    '89ee0806-2952-11e8-8d3c-0e7b3ef972a6','1','1','651.5','2018-03-16 15:45:00','0'),
+
+(0x11E82C405A23B9E0BCFC932E0B6AED9D,0x11E8295289F55C2893180E7B3EF972A6,'6',
+    '89ee0806-2952-11e8-8d3c-0e7b3ef972a6','1','1','741.5','2018-03-16 15:45:00','0')
+    (0x11E82C405A23B9E0BCFC932E0B6AED9D,0x11E8295289F55C2893180E7B3EF972A6,'6',
+    '89ee0806-2952-11e8-8d3c-0e7b3ef972a6','1','1','741.5','2018-03-16 15:45:00','0')
 on duplicate key update
-`Company`=values(`Company`),
-`FirstName`=values(`FirstName`),
-`LastName`=values(`LastName`),
-`AddressLine1`=values(`AddressLine1`),
-`AddressLine2`=values(`AddressLine2`),
-`City`=values(`City`),
-`CountryID`=values(`CountryID`),
-`StateID`=values(`StateID`),
-`Zip`=values(`Zip`),
-`Phone`=values(`Phone`),
-`Email`=values(`Email`)
+`Number`=values(`Number`),
+`Open`=values(`Open`),
+`Send`=values(`Send`),
+`_Total`=values(`_Total`),
+`Hidden`=values(`Hidden`),
+`__Active`=1;
