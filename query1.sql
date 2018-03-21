@@ -1,4 +1,4 @@
-insert ignore into`quotes`(`QuoteID`,`QuoteRequestID`,`Number`,`UserID`,`Open`,
+insert ignore into`quotes`(`quotes`.`QuoteID`,`QuoteRequestID`,`Number`,`UserID`,`Open`,
     `Send`,`_Total`,`__Added`,`Hidden`)
 values
 (0x11E8295289F6B23AAA360E7B3EF972A6,0x11E8295289F55C2893180E7B3EF972A6,'1',

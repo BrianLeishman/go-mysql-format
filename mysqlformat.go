@@ -130,7 +130,7 @@ func main() {
 	addNewline := func() {
 		newMySQL += "\n"
 		if htmlOutput {
-			htmlMySQL += "<br>"
+			htmlMySQL += "\n"
 		}
 
 		maxLineLength = 80
@@ -205,7 +205,7 @@ func main() {
 			newToken = true
 			t++
 			tokens = append(tokens, token{value: value, tokenType: tokenType})
-		case isNumeric(b):
+		case (isNumeric(b) && b != '.') || (b == '.' && ((i > 0 && isDigit(mysql[i-1])) || (i+1 < l && isDigit(mysql[i+1])))):
 			s := i
 
 			tokenType := tokenNumeric
@@ -360,12 +360,12 @@ func main() {
 					if lastNewlineOperatorTabs > 0 {
 						newMySQL = newMySQL[:lastNewlineOperatorPosition] + "\n" + strings.Repeat(" ", lastNewlineOperatorTabs*4) + newMySQL[lastNewlineOperatorPosition:]
 						if htmlOutput {
-							htmlMySQL = htmlMySQL[:htmlLastNewlineOperatorPosition] + "<br>" + strings.Repeat(" ", lastNewlineOperatorTabs*4) + htmlMySQL[htmlLastNewlineOperatorPosition:]
+							htmlMySQL = htmlMySQL[:htmlLastNewlineOperatorPosition] + "\n" + strings.Repeat(" ", lastNewlineOperatorTabs*4) + htmlMySQL[htmlLastNewlineOperatorPosition:]
 						}
 					} else {
 						newMySQL = newMySQL[:lastNewlineOperatorPosition] + "\n" + newMySQL[lastNewlineOperatorPosition:]
 						if htmlOutput {
-							htmlMySQL = htmlMySQL[:htmlLastNewlineOperatorPosition] + "<br>" + htmlMySQL[htmlLastNewlineOperatorPosition:]
+							htmlMySQL = htmlMySQL[:htmlLastNewlineOperatorPosition] + "\n" + htmlMySQL[htmlLastNewlineOperatorPosition:]
 						}
 					}
 					currentLineLength = len(newMySQL) - lastNewlineOperatorPosition
