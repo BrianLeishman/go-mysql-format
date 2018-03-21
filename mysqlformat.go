@@ -399,12 +399,13 @@ func main() {
 	}
 
 	if htmlOutput {
-		fmt.Println(htmlMySQL)
+		fmt.Print(htmlMySQL)
 	} else {
-		fmt.Println(newMySQL)
+		fmt.Print(newMySQL)
 	}
 
 	if debugTime {
+		fmt.Print("\n")
 		fmt.Println(time.Since(start))
 	}
 
