@@ -48,6 +48,7 @@ const tokenWord = 4
 const tokenFunction = 5
 const tokenBinary = 6
 const tokenNewline = 7
+const tokenSystem = 8
 
 const queryUnset = 0
 const queryInsert = 1
@@ -108,7 +109,7 @@ func main() {
 
 	newMySQL := ""
 	htmlMySQL := ""
-	maxLineLength := 60
+	maxLineLength := 80
 
 	currentLineLength := 0
 
@@ -127,13 +128,20 @@ func main() {
 
 	p := 0
 
-	addNewline := func() {
+	addNewline := func(space bool) {
+		if space {
+			newMySQL += " "
+			if htmlOutput {
+				htmlMySQL += " "
+			}
+		}
+
 		newMySQL += "\n"
 		if htmlOutput {
 			htmlMySQL += "\n"
 		}
 
-		maxLineLength = 80
+		maxLineLength = 100
 
 		currentLineLength = 0
 		lastNewlineOperatorPosition = 0
@@ -205,6 +213,16 @@ func main() {
 			newToken = true
 			t++
 			tokens = append(tokens, token{value: value, tokenType: tokenType})
+		case i+2 < l && b == '@' && mysql[i+1] == '@' && isAlnum(mysql[i+2]):
+			s := i
+			i += 2
+			for i+1 < l && (isAlnum(mysql[i+1]) || mysql[i+1] == '_') {
+				i++
+			}
+
+			newToken = true
+			t++
+			tokens = append(tokens, token{value: mysql[s : i+1], tokenType: tokenSystem})
 		case (isNumeric(b) && b != '.') || (b == '.' && ((i > 0 && isDigit(mysql[i-1])) || (i+1 < l && isDigit(mysql[i+1])))):
 			s := i
 
@@ -263,7 +281,7 @@ func main() {
 				newHTML += `<b>` + html.EscapeString(currentToken.value) + `</b>`
 
 				if currentQuery == queryInsert && p == 0 && currentToken.value == "(" && !insertUpdate {
-					addNewline()
+					addNewline(false)
 
 					if htmlOutput {
 						insertValueNumber++
@@ -280,14 +298,12 @@ func main() {
 				} else if currentToken.value == ")" {
 					p--
 				}
-			case tokenWord, tokenFunction, tokenNumeric, tokenBinary:
+			case tokenWord, tokenFunction, tokenNumeric, tokenBinary, tokenSystem:
+				space := false
 				if hasPreviousToken && (previousToken.tokenType == tokenWord || previousToken.tokenType == tokenFunction ||
-					previousToken.tokenType == tokenNumeric || previousToken.tokenType == tokenBinary) {
+					previousToken.tokenType == tokenNumeric || previousToken.tokenType == tokenBinary || previousToken.tokenType == tokenSystem) {
 					currentLineLength++
-					newString += " "
-					if htmlOutput {
-						newHTML += " "
-					}
+					space = true
 				}
 
 				if hasPreviousToken && currentToken.tokenType == tokenWord {
@@ -301,11 +317,19 @@ func main() {
 						(currentToken.value == "outer" && (previousToken.tokenType != tokenWord ||
 							(previousToken.value != "left" && previousToken.value != "right"))) ||
 						(currentQuery == queryInsert && (currentToken.value == "on" || currentToken.value == "select")) {
-						addNewline()
+						addNewline(space)
+						space = false
 					}
 
 					if currentQuery == queryInsert && currentToken.value == "select" {
 						currentQuery = queryOther
+					}
+				}
+
+				if space {
+					newString += " "
+					if htmlOutput {
+						newHTML += " "
 					}
 				}
 
@@ -320,6 +344,8 @@ func main() {
 						newHTML += `<span style="color:#FF9800">` + html.EscapeString(currentToken.value) + `</span>`
 					case tokenBinary:
 						newHTML += `<span style="color:#673AB7">` + html.EscapeString(currentToken.value) + `</span>`
+					case tokenSystem:
+						newHTML += `<span style="color:#03A9F4">` + html.EscapeString(currentToken.value) + `</span>`
 					}
 				}
 			case tokenName:
@@ -390,7 +416,7 @@ func main() {
 
 				if currentQuery == queryInsert && !insertUpdate && currentToken.tokenType == tokenWord && currentToken.value == "update" {
 					insertUpdate = true
-					addNewline()
+					addNewline(false)
 				}
 			}
 		}
